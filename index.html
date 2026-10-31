@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>สมุดเดือน</title>
+<meta name="theme-color" content="#12110e" />
+<style>
+:root {
+  --bg: #12110e;
+  --surface: #1c1914;
+  --surface-2: #28241c;
+  --fg: #f6f1e7;
+  --muted: #b3a898;
+  --faint: #8a8074;
+  --line: #3a342b;
+  --brass: #e0a24a;
+  --brass-ink: #1c1408;
+  --over: #e48972;
+  --safe-b: max(1rem, env(safe-area-inset-bottom));
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+body { min-height: 100dvh; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.wrap { max-width: 960px; margin: 0 auto; padding: 1rem 1rem calc(6rem + var(--safe-b)); }
+header { display: flex; align-items: flex-end; justify-content: space-between; gap: .75rem; }
+.brand { font-size: .85rem; color: var(--muted); }
+h1 { margin: .2rem 0 0; font-size: 1.15rem; }
+.nav { display: flex; align-items: center; gap: .5rem; margin: 1rem 0; }
+.nav h2 { flex: 1; text-align: center; margin: 0; font-size: 1.1rem; }
+.icon-btn, .chip, .btn { border: 0; border-radius: 999px; background: var(--surface-2); color: var(--fg); min-height: 44px; }
+.icon-btn { width: 44px; }
+.btn { background: var(--brass); color: var(--brass-ink); padding: 0 1rem; font-weight: 600; }
+.btn.ghost { background: transparent; color: var(--muted); }
+.btn.danger { background: transparent; color: var(--over); }
+.hero { background: var(--surface); border: 1px solid var(--line); border-radius: 1.25rem; padding: 1.1rem; }
+.hero .big { font-size: 2.1rem; font-weight: 700; margin: .2rem 0; }
+.progress { height: 8px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-top: .75rem; }
+.progress > span { display: block; height: 100%; background: var(--brass); }
+.muted { color: var(--muted); font-size: .9rem; }
+.faint { color: var(--faint); font-size: .8rem; }
+.section { margin-top: 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: 1.25rem; padding: 1rem; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .55rem 0; }
+.chips { display: flex; gap: .4rem; overflow-x: auto; padding-bottom: .25rem; }
+.chip { padding: 0 .9rem; white-space: nowrap; }
+.chip.on { background: var(--brass); color: var(--brass-ink); }
+.list { background: var(--surface); border: 1px solid var(--line); border-radius: 1.25rem; overflow: hidden; }
+.item { width: 100%; text-align: left; background: transparent; border: 0; border-top: 1px solid var(--line); padding: .85rem 1rem; display: flex; align-items: center; gap: .75rem; min-height: 56px; }
+.item:first-child { border-top: 0; }
+.item:hover { background: var(--surface-2); }
+.sheet { position: fixed; inset: 0; z-index: 20; display: none; }
+.sheet.open { display: block; }
+.sheet .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.55); }
+.sheet .panel { position: absolute; left: 0; right: 0; bottom: 0; max-height: 92dvh; background: var(--surface); border-radius: 1.25rem 1.25rem 0 0; display: flex; flex-direction: column; overflow: hidden; }
+.sheet .head, .sheet .foot { padding: 1rem 1.1rem; flex: 0 0 auto; }
+.sheet .foot { border-top: 1px solid var(--line); padding-bottom: var(--safe-b); }
+.sheet .body { overflow: auto; padding: 0 1.1rem 1rem; min-height: 0; }
+label { display: block; margin: .85rem 0 .3rem; color: var(--muted); font-size: .9rem; }
+input, select { width: 100%; min-height: 44px; border: 1px solid var(--line); background: var(--surface-2); border-radius: .9rem; padding: 0 .8rem; }
+.amount { font-size: 1.8rem; font-weight: 700; }
+.grid4 { display: grid; grid-cols: 4; grid-template-columns: repeat(4, 1fr); gap: .4rem; }
+.grid4 button { min-height: 64px; border-radius: .9rem; border: 0; background: var(--surface-2); }
+.grid4 button.on { background: var(--brass); color: var(--brass-ink); }
+.banner { display: flex; align-items: center; justify-content: space-between; gap: .75rem; background: var(--surface-2); border: 1px solid var(--line); border-radius: 1rem; padding: .75rem 1rem; margin-bottom: 1rem; }
+.fab { position: fixed; right: 1rem; bottom: calc(1rem + var(--safe-b)); z-index: 10; }
+@media (min-width: 900px) {
+  .layout { display: grid; grid-template-columns: 22rem 1fr; gap: 1.25rem; align-items: start; }
+  .sticky { position: sticky; top: 1rem; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="brand">สมุดเดือน</div>
+      <h1>ค่าใช้จ่ายรายเดือน</h1>
+    </div>
+    <button class="btn" id="addTop">+ บันทึก</button>
+  </header>
+
+  <div class="nav">
+    <button class="icon-btn" id="prev">‹</button>
+    <h2 id="monthTitle"></h2>
+    <button class="icon-btn" id="next">›</button>
+  </div>
+  <div id="todayLink" style="text-align:center;margin-top:-.5rem"></div>
+
+  <div class="layout">
+    <div class="sticky">
+      <div class="hero">
+        <div class="muted" id="heroLabel">เหลือในเดือนนี้</div>
+        <div class="big" id="heroValue">฿0</div>
+        <div class="muted" id="heroSub"></div>
+        <div class="progress"><span id="bar" style="width:0%"></span></div>
+        <div class="faint" id="pace" style="margin-top:.5rem"></div>
+        <button class="btn ghost" id="budgetBtn" style="margin-top:.6rem">ตั้งงบเดือนนี้</button>
+        <form id="budgetForm" style="display:none;margin-top:.6rem;display:none;gap:.4rem">
+          <input id="budgetInput" inputmode="numeric" placeholder="เช่น 12000" />
+          <button class="btn" type="submit">บันทึกงบ</button>
+        </form>
+      </div>
+      <div class="section">
+        <div class="muted">ตามหมวด</div>
+        <div id="cats"></div>
+      </div>
+      <div class="section">
+        <div class="muted">บัตรและบัญชี</div>
+        <div id="methods"></div>
+        <div class="faint" style="margin-top:.4rem">เพิ่มได้ตอนบันทึกรายจ่าย</div>
+      </div>
+    </div>
+
+    <div>
+      <div id="demoBanner"></div>
+      <div class="chips" id="filters"></div>
+      <div id="groups" style="margin-top:.75rem"></div>
+      <p class="faint" style="text-align:center;margin-top:1.5rem">เก็บไว้ในเครื่องนี้เท่านั้น</p>
+    </div>
+  </div>
+</div>
+
+<button class="btn fab" id="addFab">+ บันทึก</button>
+
+<div class="sheet" id="sheet">
+  <div class="backdrop" id="backdrop"></div>
+  <div class="panel">
+    <div class="head">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <strong id="sheetTitle">บันทึกรายจ่าย</strong>
+          <div class="muted">ยอด หมวด วิธีจ่าย และถ้าซ้ำทุกเดือนจะโผล่เดือนถัดไปทันที</div>
+        </div>
+        <button class="icon-btn" id="close">✕</button>
+      </div>
+    </div>
+    <form class="body" id="form">
+      <label>จำนวนเงิน</label>
+      <input class="amount" id="amount" inputmode="decimal" placeholder="0" required />
+      <label>หมวด</label>
+      <div class="grid4" id="catPick"></div>
+      <label>บันทึก</label>
+      <input id="note" maxlength="80" placeholder="เช่น ค่า Netflix" />
+      <label>วันที่เริ่ม</label>
+      <input type="date" id="date" required />
+      <label>วิธีจ่าย</label>
+      <div class="chips" id="payPick"></div>
+      <div id="methodForm" style="display:none;margin-top:.5rem;background:var(--surface-2);padding:.75rem;border-radius:.9rem"></div>
+      <div id="repeatBox" style="margin-top:.8rem"></div>
+    </form>
+    <div class="foot">
+      <button class="btn" style="width:100%" id="saveBtn" form="form">บันทึกรายการ</button>
+      <div id="delBox" style="margin-top:.5rem;text-align:center"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATEGORIES = [
+  {id:"food", name:"อาหาร"},
+  {id:"transit", name:"เดินทาง"},
+  {id:"home", name:"ที่อยู่"},
+  {id:"bills", name:"ค่าบิล"},
+  {id:"shop", name:"ช้อป"},
+  {id:"health", name:"สุขภาพ"},
+  {id:"fun", name:"บันเทิง"},
+  {id:"other", name:"อื่นๆ"}
+];
+const BANKS = ["กสิกรไทย","ไทยพาณิชย์","กรุงเทพ","กรุงไทย","กรุงศรีอยุธยา","ทหารไทยธนชาต","ออมสิน","อื่นๆ"];
+const MONTHS = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+const KEY = "somud-duean.v1";
+
+const $ = id => document.getElementById(id);
+const today = new Date();
+let state = load();
+let month = monthKey(today);
+let filter = "all";
+let editing = null;
+let addingMethod = null;
+
+function monthKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; }
+function iso(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function parseMonth(key){ const [y,m] = key.split("-").map(Number); return {y, m: m-1}; }
+function shift(key, delta){ const {y,m} = parseMonth(key); return monthKey(new Date(y, m+delta, 1)); }
+function title(key){ const {y,m} = parseMonth(key); return `${MONTHS[m]} ${y+543}`; }
+function baht(n){ return new Intl.NumberFormat("th-TH",{style:"currency",currency:"THB",maximumFractionDigits:n%1?2:0}).format(n||0); }
+function parseAmount(s){ const c = String(s).replace(/[,\s฿]/g,""); if(!/^\d+(\.\d{0,2})?$/.test(c)) return null; const n = Number(c); return n>0 && n<1e7 ? Math.round(n*100)/100 : null; }
+function occurrenceDates(start, months){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(start)) return [];
+  const [y,m,d] = start.split("-").map(Number);
+  const span = months == null ? 12-m+1 : Math.min(36, Math.max(1, months|0));
+  const out = [];
+  for(let i=0;i<span;i++){
+    const mi = m-1+i; const yy = y + Math.floor(mi/12); const mm = mi%12;
+    const last = new Date(yy, mm+1, 0).getDate();
+    out.push(iso(new Date(yy, mm, Math.min(d, last))));
+  }
+  return out;
+}
+function methodLabel(m){ return m.kind==="card" ? `${m.name} · ${m.last4}` : `${m.bank}${m.name? " "+m.name:""} · ${m.last4}`; }
+
+function seed(){
+  const y = today.getFullYear(), m = today.getMonth();
+  const mk = (day, amount, cat, note, extra={}) => ({ id: crypto.randomUUID(), amount, categoryId: cat, note, date: iso(new Date(y,m,day)), createdAt: Date.now(), ...extra });
+  const card = { id: "demo-card", kind:"card", name:"กสิกร วีซ่า", last4:"4242" };
+  const bank = { id: "demo-bank", kind:"bank", bank:"ไทยพาณิชย์", name:"ออมทรัพย์", last4:"8891" };
+  const expenses = [
+    mk(1,3500,"home","ค่าเช่าห้อง"),
+    mk(2,599,"bills","อินเทอร์เน็ต"),
+    mk(3,399,"bills","ค่ามือถือ"),
+    mk(5,240,"food","ตลาดสด"),
+    mk(7,350,"transit","น้ำมัน"),
+    mk(8,169,"bills","Netflix",{seriesId:"demo-netflix", payMethodId:card.id}),
+    mk(15,450,"shop","ผ่อนหูฟัง",{seriesId:"demo-install", payMethodId:card.id})
+  ];
+  // materialize a couple future months for demo series
+  const netflixDates = occurrenceDates(iso(new Date(y,m,8)), null);
+  const instDates = occurrenceDates(iso(new Date(y,m,15)), 6);
+  netflixDates.slice(1).forEach(date => expenses.push({ id:crypto.randomUUID(), amount:169, categoryId:"bills", note:"Netflix", date, createdAt:Date.now(), seriesId:"demo-netflix", payMethodId:card.id }));
+  instDates.slice(1).forEach(date => expenses.push({ id:crypto.randomUUID(), amount:450, categoryId:"shop", note:"ผ่อนหูฟัง", date, createdAt:Date.now(), seriesId:"demo-install", payMethodId:card.id }));
+  const budgets = {}; budgets[monthKey(today)] = 12000;
+  return { v:1, expenses, budgets, demoIds: expenses.map(e=>e.id), methods:[card, bank] };
+}
+function load(){
+  try {
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return seed();
+    const p = JSON.parse(raw);
+    if(p.v!==1 || !Array.isArray(p.expenses)) return seed();
+    return { v:1, expenses:p.expenses, budgets:p.budgets||{}, demoIds:p.demoIds||[], methods:Array.isArray(p.methods)?p.methods:[] };
+  } catch { return seed(); }
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+
+function inMonth(items, key){ return items.filter(e => e.date.startsWith(key+"-")); }
+function sum(items){ return Math.round(items.reduce((s,e)=>s+e.amount,0)*100)/100; }
+
+function render(){
+  $("monthTitle").textContent = title(month);
+  const items = inMonth(state.expenses, month);
+  const spent = sum(items);
+  const budget = state.budgets[month] || null;
+  const remaining = budget==null ? null : Math.round((budget-spent)*100)/100;
+  const over = remaining!=null && remaining<0;
+  $("heroLabel").textContent = over ? "เกินงบเดือนนี้" : budget ? "เหลือในเดือนนี้" : "ใช้ไปเดือนนี้";
+  $("heroValue").textContent = over ? baht(-remaining) : remaining!=null ? baht(remaining) : baht(spent);
+  $("heroValue").style.color = over ? "var(--over)" : "";
+  $("heroSub").textContent = budget ? `ใช้ไปแล้ว ${baht(spent)} จากงบ ${baht(budget)}` : "ยังไม่ได้ตั้งงบเดือนนี้";
+  $("bar").style.width = budget ? Math.min(100, Math.round(spent/budget*100))+"%" : "0%";
+  $("bar").style.background = over ? "var(--over)" : "var(--brass)";
+  $("todayLink").innerHTML = month !== monthKey(today) ? `<button class="btn ghost" id="backToday">กลับเดือนนี้</button>` : "";
+  if($("backToday")) $("backToday").onclick = () => { month = monthKey(today); render(); };
+
+  const catHtml = CATEGORIES.map(c => {
+    const amt = sum(items.filter(e => e.categoryId===c.id));
+    if(!amt) return "";
+    const w = Math.max(2, Math.round(amt/spent*100));
+    return `<div class="row"><span>${c.name}</span><span>${baht(amt)}</span></div><div class="progress"><span style="width:${w}%"></span></div>`;
+  }).join("");
+  $("cats").innerHTML = catHtml || `<div class="muted">ยังไม่มีรายจ่าย</div>`;
+
+  const methodHtml = (state.methods||[]).map(m => {
+    const amt = sum(items.filter(e => e.payMethodId===m.id));
+    return `<div class="row"><span>${m.kind==="card"?"บัตร":"บัญชี"} ${methodLabel(m)}</span><span>${baht(amt)}</span></div>`;
+  }).join("");
+  const cash = sum(items.filter(e => !e.payMethodId));
+  $("methods").innerHTML = (cash?`<div class="row"><span>เงินสด</span><span>${baht(cash)}</span></div>`:"") + (methodHtml || `<div class="muted">ยังไม่มีบัตรหรือบัญชี</div>`);
+
+  const hasDemo = items.some(e => (state.demoIds||[]).includes(e.id));
+  $("demoBanner").innerHTML = hasDemo ? `<div class="banner"><span class="muted">รายการตัวอย่าง</span><button class="btn ghost" id="clearDemo">ล้างตัวอย่าง</button></div>` : "";
+  if($("clearDemo")) $("clearDemo").onclick = clearDemo;
+
+  const chips = [`<button class="chip ${filter==="all"?"on":""}" data-f="all">ทั้งหมด</button>`]
+    .concat(CATEGORIES.map(c => `<button class="chip ${filter===c.id?"on":""}" data-f="${c.id}">${c.name}</button>`)).join("");
+  $("filters").innerHTML = chips;
+  $("filters").querySelectorAll("button").forEach(b => b.onclick = () => { filter = b.dataset.f; render(); });
+
+  const visible = filter==="all" ? items : items.filter(e => e.categoryId===filter);
+  const groups = {};
+  visible.sort((a,b)=> b.date.localeCompare(a.date) || b.createdAt-a.createdAt).forEach(e => {
+    (groups[e.date] ||= []).push(e);
+  });
+  $("groups").innerHTML = Object.keys(groups).length ? Object.entries(groups).map(([date, list]) => {
+    const label = date===iso(today) ? "วันนี้" : date;
+    return `<div class="muted" style="margin:.6rem 0 .25rem">${label} · ${baht(sum(list))}</div>
+      <div class="list">${list.map(e => {
+        const cat = CATEGORIES.find(c=>c.id===e.categoryId)?.name || "";
+        const meth = state.methods.find(m=>m.id===e.payMethodId);
+        const series = e.seriesId ? "ทุกเดือน" : "";
+        const sub = [e.note?cat:null, meth?methodLabel(meth):null, series].filter(Boolean).join(" · ");
+        return `<button class="item" data-id="${e.id}"><div style="flex:1"><div>${e.note||cat}</div><div class="faint">${sub}</div></div><strong>${baht(e.amount)}</strong></button>`;
+      }).join("")}</div>`;
+  }).join("") : `<div class="section" style="text-align:center">เดือนนี้ยังว่าง</div>`;
+  $("groups").querySelectorAll(".item").forEach(b => b.onclick = () => openEdit(b.dataset.id));
+}
+
+function clearDemo(){
+  const drop = new Set(state.demoIds||[]);
+  state.expenses = state.expenses.filter(e => !drop.has(e.id));
+  state.demoIds = [];
+  save(); render();
+}
+
+function openCreate(){
+  editing = null;
+  $("sheetTitle").textContent = "บันทึกรายจ่าย";
+  $("amount").value = "";
+  $("note").value = "";
+  $("date").value = month===monthKey(today) ? iso(today) : month+"-01";
+  renderCats("food");
+  renderPay(undefined);
+  renderRepeat(false);
+  $("delBox").innerHTML = "";
+  $("saveBtn").textContent = "บันทึกรายการ";
+  $("sheet").classList.add("open");
+  setTimeout(()=> $("amount").focus(), 50);
+}
+function openEdit(id){
+  const e = state.expenses.find(x=>x.id===id);
+  if(!e) return;
+  editing = e;
+  $("sheetTitle").textContent = "แก้ไขรายการ";
+  $("amount").value = e.amount;
+  $("note").value = e.note;
+  $("date").value = e.date;
+  renderCats(e.categoryId);
+  renderPay(e.payMethodId);
+  $("repeatBox").innerHTML = e.seriesId ? `<button type="button" class="chip" id="applySeries">ใช้กับทั้งชุด</button>` : "";
+  $("delBox").innerHTML = e.seriesId
+    ? `<button type="button" class="btn danger" id="delOne">ลบเฉพาะเดือนนี้</button> <button type="button" class="btn danger" id="delSeries">ลบทั้งชุด</button>`
+    : `<button type="button" class="btn danger" id="delOne">ลบรายการนี้</button>`;
+  $("saveBtn").textContent = "อัปเดตรายการ";
+  $("sheet").classList.add("open");
+  if($("delOne")) $("delOne").onclick = () => del(e.id, "one");
+  if($("delSeries")) $("delSeries").onclick = () => del(e.id, "series");
+}
+function closeSheet(){ $("sheet").classList.remove("open"); editing = null; }
+
+let pickedCat = "food";
+let pickedPay;
+function renderCats(selected){
+  pickedCat = selected || "food";
+  $("catPick").innerHTML = CATEGORIES.map(c => `<button type="button" data-c="${c.id}" class="${c.id===pickedCat?"on":""}">${c.name}</button>`).join("");
+  $("catPick").querySelectorAll("button").forEach(b => b.onclick = () => renderCats(b.dataset.c));
+}
+function renderPay(selected){
+  pickedPay = selected;
+  const chips = [`<button type="button" class="chip ${!pickedPay?"on":""}" data-p="">เงินสด</button>`]
+    .concat((state.methods||[]).map(m => `<button type="button" class="chip ${pickedPay===m.id?"on":""}" data-p="${m.id}">${m.kind==="card"?"บัตร":"บัญชี"} ${methodLabel(m)}</button>`))
+    .concat(`<button type="button" class="chip" id="addMethod">เพิ่ม</button>`).join("");
+  $("payPick").innerHTML = chips;
+  $("payPick").querySelectorAll("[data-p]").forEach(b => b.onclick = () => renderPay(b.dataset.p || undefined));
+  $("addMethod").onclick = () => { addingMethod = "card"; showMethodForm(); };
+}
+function showMethodForm(){
+  $("methodForm").style.display = "block";
+  $("methodForm").innerHTML = `
+    <div class="chips">
+      <button type="button" class="chip ${addingMethod==="card"?"on":""}" data-k="card">บัตรเครดิต</button>
+      <button type="button" class="chip ${addingMethod==="bank"?"on":""}" data-k="bank">บัญชีธนาคาร</button>
+    </div>
+    ${addingMethod==="bank" ? `<label>ธนาคาร</label><select id="mBank">${BANKS.map(b=>`<option>${b}</option>`).join("")}</select>` : ""}
+    <label>${addingMethod==="card"?"ชื่อบัตร":"ชื่อบัญชี"}</label>
+    <input id="mName" placeholder="${addingMethod==="card"?"เช่น กสิกร วีซ่า":"ไม่บังคับ"}" />
+    <label>เลข 4 ตัวท้าย</label>
+    <input id="mLast4" inputmode="numeric" maxlength="4" placeholder="4242" />
+    <button type="button" class="btn" style="margin-top:.5rem" id="commitMethod">เก็บไว้ใช้ครั้งถัดไป</button>
+  `;
+  $("methodForm").querySelectorAll("[data-k]").forEach(b => b.onclick = () => { addingMethod = b.dataset.k; showMethodForm(); });
+  $("commitMethod").onclick = commitMethod;
+}
+function commitMethod(){
+  const last4 = $("mLast4").value.replace(/\D/g,"").slice(0,4);
+  const name = $("mName").value.trim();
+  if(!/^\d{4}$/.test(last4)) return alert("ใส่เลข 4 ตัวท้าย");
+  if(addingMethod==="card" && !name) return alert("ใส่ชื่อบัตร");
+  const method = addingMethod==="card"
+    ? { id: crypto.randomUUID(), kind:"card", name, last4 }
+    : { id: crypto.randomUUID(), kind:"bank", bank: $("mBank").value, name, last4 };
+  state.methods.push(method);
+  save();
+  $("methodForm").style.display = "none";
+  renderPay(method.id);
+  render();
+}
+function renderRepeat(on){
+  $("repeatBox").innerHTML = `
+    <button type="button" class="chip ${on?"on":""}" id="repeatToggle">${on?"ซ้ำทุกเดือน เปิด":"ซ้ำทุกเดือน ปิด"}</button>
+    ${on ? `<label>กี่เดือน</label><input id="repeatN" inputmode="numeric" placeholder="ว่างไว้ = จนสิ้นปีนี้" /><div class="faint" id="repeatHint"></div>` : ""}
+  `;
+  $("repeatToggle").onclick = () => renderRepeat(!on);
+  if(on){
+    $("repeatN").oninput = () => {
+      const raw = $("repeatN").value.trim();
+      const months = raw ? Number(raw) : null;
+      const dates = occurrenceDates($("date").value, months);
+      $("repeatHint").textContent = dates.length>1 ? `${title(dates[0].slice(0,7))} ถึง ${title(dates.at(-1).slice(0,7))}` : "เฉพาะเดือนนี้";
+    };
+  }
+}
+
+$("form").onsubmit = e => {
+  e.preventDefault();
+  const amount = parseAmount($("amount").value);
+  if(amount==null) return alert("ใส่จำนวนเงินให้ถูกต้อง");
+  const note = $("note").value.trim();
+  const date = $("date").value;
+  const payMethodId = pickedPay || undefined;
+  if(editing){
+    const apply = $("applySeries") && $("applySeries").classList.contains("on");
+    if(apply && editing.seriesId){
+      const day = Number(date.slice(8,10));
+      state.expenses = state.expenses.map(item => {
+        if(item.seriesId !== editing.seriesId) return item;
+        const key = item.date.slice(0,7);
+        const {y,m} = parseMonth(key);
+        const last = new Date(y, m+1, 0).getDate();
+        return { ...item, amount, categoryId:pickedCat, note, date: iso(new Date(y,m,Math.min(day,last))), payMethodId };
+      });
+    } else {
+      Object.assign(editing, { amount, categoryId:pickedCat, note, date, payMethodId });
+    }
+  } else {
+    const repeatOn = $("repeatToggle") && $("repeatToggle").textContent.includes("เปิด");
+    if(repeatOn){
+      const raw = ($("repeatN")?.value || "").trim();
+      const months = raw ? Number(raw) : null;
+      const dates = occurrenceDates(date, months);
+      const seriesId = dates.length>1 ? crypto.randomUUID() : undefined;
+      dates.forEach((d,i) => state.expenses.push({ id:crypto.randomUUID(), amount, categoryId:pickedCat, note, date:d, createdAt:Date.now()+i, seriesId, payMethodId }));
+    } else {
+      state.expenses.unshift({ id:crypto.randomUUID(), amount, categoryId:pickedCat, note, date, createdAt:Date.now(), payMethodId });
+    }
+  }
+  save(); closeSheet(); month = date.slice(0,7); render();
+};
+function del(id, scope){
+  const cur = state.expenses.find(e=>e.id===id);
+  if(scope==="series" && cur?.seriesId){
+    state.expenses = state.expenses.filter(e => e.seriesId !== cur.seriesId);
+  } else {
+    state.expenses = state.expenses.filter(e => e.id !== id);
+  }
+  save(); closeSheet(); render();
+}
+
+$("budgetBtn").onclick = () => { $("budgetForm").style.display = "flex"; $("budgetInput").value = state.budgets[month] || ""; };
+$("budgetForm").onsubmit = e => { e.preventDefault(); const n = parseAmount($("budgetInput").value); if(n) state.budgets[month]=n; else delete state.budgets[month]; save(); $("budgetForm").style.display="none"; render(); };
+
+$("prev").onclick = () => { month = shift(month,-1); render(); };
+$("next").onclick = () => { month = shift(month,1); render(); };
+$("addTop").onclick = $("addFab").onclick = openCreate;
+$("close").onclick = $("backdrop").onclick = closeSheet;
+
+render();
+</script>
+</body>
+</html>
